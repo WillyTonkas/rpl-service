@@ -2,12 +2,9 @@ name: CI Workflow
 
 on:
   pull_request:
-    branches:
-      - main
-      - dev
+    branches: ["main", "dev"]
   push:
-    branches-ignore:
-      - main
+    branches-ignore: ["main"]
 
 jobs:
   lint-and-test:

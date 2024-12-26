@@ -1,11 +1,11 @@
 name: CD Workflow
-
+# TODO: Make the binary for the workflow to compile correctly
 on:
-  pull_request:
-    types:
-      - closed
+  push:
     branches:
       - main
+  release:
+    types: [created]
 
 jobs:
   build-and-deploy:
