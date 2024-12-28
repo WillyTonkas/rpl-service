@@ -12,6 +12,7 @@ type IsEnrolled struct {
 	gorm.Model
 	UserId   uint
 	CourseId uint
+	IsOwner  bool
 }
 
 type Course struct {

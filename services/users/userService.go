@@ -21,6 +21,31 @@ func userInCourse(db *gorm.DB, userId, courseId uint) bool {
 	return db.Model(models.IsEnrolled{}).Where("UserId = ? AND CourseId = ?", userId, courseId).Error != nil
 }
 
+func CreateCourse(db *gorm.DB, userId uint, courseName, description string) error {
+	if !userExists(db, userId) {
+		return fmt.Errorf("User does not exist.")
+	}
+
+	currentCourse := models.Course{
+		Model:       gorm.Model{},
+		Name:        courseName,
+		Description: description,
+	}
+
+	if db.Model(models.Course{}).Create(&currentCourse).Error != nil {
+		return fmt.Errorf("Error when to create a course.")
+	}
+
+	db.Model(models.IsEnrolled{}).Create(models.IsEnrolled{
+		Model:    gorm.Model{},
+		UserId:   userId,
+		CourseId: currentCourse.ID,
+		IsOwner:  true,
+	})
+
+	return nil
+}
+
 func EnrollToCourse(db *gorm.DB, userId, courseId uint) error {
 	if !userExists(db, userId) {
 		return fmt.Errorf("User does not exist.")
@@ -34,6 +59,7 @@ func EnrollToCourse(db *gorm.DB, userId, courseId uint) error {
 		Model:    gorm.Model{},
 		UserId:   userId,
 		CourseId: courseId,
+		IsOwner:  false,
 	})
 
 	return nil
