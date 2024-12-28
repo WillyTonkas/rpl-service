@@ -1,12 +1,12 @@
 package users
 
 import (
-	"fmt"
+	"errors"
 	"gorm.io/gorm"
 	"rpl-service/models"
 )
 
-func CreateCourse(db *gorm.DB, userId uint, courseName, description string) error {
+func CreateCourse(db *gorm.DB, userID uint, courseName, description string) error {
 	currentCourse := models.Course{
 		Model:       gorm.Model{},
 		Name:        courseName,
@@ -14,12 +14,12 @@ func CreateCourse(db *gorm.DB, userId uint, courseName, description string) erro
 	}
 
 	if db.Model(models.Course{}).Create(&currentCourse).Error != nil {
-		return fmt.Errorf("Error when creating a course.")
+		return errors.New("error when creating a course")
 	}
 
 	db.Model(models.IsEnrolled{}).Create(models.IsEnrolled{
 		Model:    gorm.Model{},
-		UserId:   userId,
+		UserId:   userID,
 		CourseId: currentCourse.ID,
 		IsOwner:  true,
 	})
@@ -27,43 +27,43 @@ func CreateCourse(db *gorm.DB, userId uint, courseName, description string) erro
 	return nil
 }
 
-func RemoveStudent(db *gorm.DB, userId, courseId, studentId uint) error {
-	if !isOwner(db, userId, courseId) {
-		return fmt.Errorf("This user doesn't have permission to create a unit.")
+func RemoveStudent(db *gorm.DB, userID, courseID, studentID uint) error {
+	if !isOwner(db, userID, courseID) {
+		return errors.New("this user doesn't have permission to remove any student")
 	}
 
-	if !userInCourse(db, studentId, courseId) {
-		return fmt.Errorf("The user does not exist in the course.")
+	if !userInCourse(db, studentID, courseID) {
+		return errors.New("the user does not exist in the course")
 	}
 
 	var student models.IsEnrolled
-	db.Model(models.IsEnrolled{}).First(&student, "ID = ?", studentId)
+	db.Model(models.IsEnrolled{}).First(&student, "ID = ?", studentID)
 	db.Model(models.IsEnrolled{}).Delete(&student)
 
 	return nil
 }
 
-func EnrollToCourse(db *gorm.DB, userId, courseId uint) error {
-	if userInCourse(db, userId, courseId) {
-		return fmt.Errorf("User is already in course.")
+func EnrollToCourse(db *gorm.DB, userID, courseID uint) error {
+	if userInCourse(db, userID, courseID) {
+		return errors.New("user is already in course")
 	}
 
 	db.Model(models.IsEnrolled{}).Create(models.IsEnrolled{
 		Model:    gorm.Model{},
-		UserId:   userId,
-		CourseId: courseId,
+		UserId:   userID,
+		CourseId: courseID,
 		IsOwner:  false,
 	})
 
 	return nil
 }
 
-func CreateExercise(db *gorm.DB, exercise models.ExerciseDTO, userId, courseId uint) error {
-	if !isOwner(db, userId, courseId) {
-		return fmt.Errorf("This user doesn't have permission to create a unit.")
+func CreateExercise(db *gorm.DB, exercise models.ExerciseDTO, userID, courseID uint) error {
+	if !isOwner(db, userID, courseID) {
+		return errors.New("this user doesn't have permission to create an exercise")
 	}
 
-	testIds := []uint{}
+	var testIds []uint
 	for _, test := range exercise.TestData {
 		testIds = append(testIds, CreateTest(db, test))
 	}
@@ -89,27 +89,27 @@ func CreateTest(db *gorm.DB, test models.TestDTO) uint {
 		Output: test.Output,
 	})
 
-	var currentTestId uint
-	db.Model(models.Test{}).Select("ID").Last(&currentTestId)
+	var currentTestID uint
+	db.Model(models.Test{}).Select("ID").Last(&currentTestID)
 
-	return currentTestId
+	return currentTestID
 }
 
 // ------------------------- Private functions -------------------------
 
-func isOwner(db *gorm.DB, userId uint, courseId uint) bool {
+func isOwner(db *gorm.DB, userID uint, courseID uint) bool {
 	currentUser := models.IsEnrolled{}
-	db.Model(models.IsEnrolled{}).Where("UserId = ? AND CourseId = ?", userId, courseId).First(&currentUser)
+	db.Model(models.IsEnrolled{}).Where("UserId = ? AND CourseId = ?", userID, courseID).First(&currentUser)
 	return currentUser.IsOwner
 }
 
-func courseExists(db *gorm.DB, courseId uint) bool {
-	return db.Model(models.Course{}).Where("ID = ?", courseId).Error != nil
+func courseExists(db *gorm.DB, courseID uint) bool {
+	return db.Model(models.Course{}).Where("ID = ?", courseID).Error != nil
 }
 
-func userInCourse(db *gorm.DB, userId, courseId uint) bool {
-	if !courseExists(db, courseId) {
+func userInCourse(db *gorm.DB, userID, courseID uint) bool {
+	if !courseExists(db, courseID) {
 		return false
 	}
-	return db.Model(models.IsEnrolled{}).Where("UserId = ? AND CourseId = ?", userId, courseId).Error != nil
+	return db.Model(models.IsEnrolled{}).Where("UserId = ? AND CourseId = ?", userID, courseID).Error != nil
 }
