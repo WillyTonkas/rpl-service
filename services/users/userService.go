@@ -6,6 +6,26 @@ import (
 	"rpl-service/models"
 )
 
+func EnrollToCourse(db *gorm.DB, userID, courseID uint) error {
+	// TODO: delete the following line
+	// if !userExists(db, userID) {
+	//	return errors.New("user does not exist")
+	//}
+
+	if userInCourse(db, userID, courseID) {
+		return errors.New("user is already in course")
+	}
+
+	db.Model(models.IsEnrolled{}).Create(models.IsEnrolled{
+		Model:    gorm.Model{},
+		UserID:   userID,
+		CourseID: courseID,
+		IsOwner:  false,
+	})
+
+	return nil
+}
+
 func CreateCourse(db *gorm.DB, userID uint, courseName, description string) error {
 	currentCourse := models.Course{
 		Model:       gorm.Model{},
@@ -19,8 +39,8 @@ func CreateCourse(db *gorm.DB, userID uint, courseName, description string) erro
 
 	db.Model(models.IsEnrolled{}).Create(models.IsEnrolled{
 		Model:    gorm.Model{},
-		UserId:   userID,
-		CourseId: currentCourse.ID,
+		UserID:   userID,
+		CourseID: currentCourse.ID,
 		IsOwner:  true,
 	})
 
@@ -43,29 +63,14 @@ func RemoveStudent(db *gorm.DB, userID, courseID, studentID uint) error {
 	return nil
 }
 
-func EnrollToCourse(db *gorm.DB, userID, courseID uint) error {
-	if userInCourse(db, userID, courseID) {
-		return errors.New("user is already in course")
-	}
-
-	db.Model(models.IsEnrolled{}).Create(models.IsEnrolled{
-		Model:    gorm.Model{},
-		UserId:   userID,
-		CourseId: courseID,
-		IsOwner:  false,
-	})
-
-	return nil
-}
-
 func CreateExercise(db *gorm.DB, exercise models.ExerciseDTO, userID, courseID uint) error {
 	if !isOwner(db, userID, courseID) {
 		return errors.New("this user doesn't have permission to create an exercise")
 	}
 
-	var testIds []uint
+	var testIDs []uint
 	for _, test := range exercise.TestData {
-		testIds = append(testIds, CreateTest(db, test))
+		testIDs = append(testIDs, CreateTest(db, test))
 	}
 
 	db.Model(models.Exercise{}).Create(models.Exercise{
@@ -73,7 +78,7 @@ func CreateExercise(db *gorm.DB, exercise models.ExerciseDTO, userID, courseID u
 		Name:        exercise.Name,
 		Description: exercise.Description,
 		BaseCode:    exercise.BaseCode,
-		TestIds:     testIds,
+		TestIDs:     testIDs,
 		Points:      exercise.Points,
 		UnitNumber:  exercise.UnitNumber,
 	})
@@ -99,9 +104,14 @@ func CreateTest(db *gorm.DB, test models.TestDTO) uint {
 
 func isOwner(db *gorm.DB, userID uint, courseID uint) bool {
 	currentUser := models.IsEnrolled{}
-	db.Model(models.IsEnrolled{}).Where("UserId = ? AND CourseId = ?", userID, courseID).First(&currentUser)
+	db.Model(models.IsEnrolled{}).Where("UserID = ? AND CourseID = ?", userID, courseID).First(&currentUser)
 	return currentUser.IsOwner
 }
+
+// func userExists(db *gorm.DB, id uint) bool {
+//	//TODO: use Auth0
+//	return true
+//}
 
 func courseExists(db *gorm.DB, courseID uint) bool {
 	return db.Model(models.Course{}).Where("ID = ?", courseID).Error != nil
@@ -111,5 +121,5 @@ func userInCourse(db *gorm.DB, userID, courseID uint) bool {
 	if !courseExists(db, courseID) {
 		return false
 	}
-	return db.Model(models.IsEnrolled{}).Where("UserId = ? AND CourseId = ?", userID, courseID).Error != nil
+	return db.Model(models.IsEnrolled{}).Where("UserID = ? AND CourseID = ?", userID, courseID).Error != nil
 }

@@ -15,7 +15,7 @@ type Exercise struct {
 	BaseCode    string
 	Points      int
 	UnitNumber  int
-	TestIds     []uint `gorm:"foreignkey:ExerciseId"`
+	TestIDs     []uint `gorm:"foreignkey:ExerciseId"`
 }
 
 type Test struct {

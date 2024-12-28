@@ -6,8 +6,8 @@ import (
 
 type IsEnrolled struct {
 	gorm.Model
-	UserId   uint
-	CourseId uint
+	UserID   uint
+	CourseID uint
 	IsOwner  bool
 }
 
