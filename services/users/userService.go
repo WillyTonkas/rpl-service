@@ -6,26 +6,7 @@ import (
 	"rpl-service/models"
 )
 
-func userExists(db *gorm.DB, id uint) bool {
-	return db.Model(models.User{}).Where("ID = ?", id).Error != nil
-}
-
-func courseExists(db *gorm.DB, courseId uint) bool {
-	return db.Model(models.Course{}).Where("ID = ?", courseId).Error != nil
-}
-
-func userInCourse(db *gorm.DB, userId, courseId uint) bool {
-	if !courseExists(db, courseId) {
-		return false
-	}
-	return db.Model(models.IsEnrolled{}).Where("UserId = ? AND CourseId = ?", userId, courseId).Error != nil
-}
-
 func CreateCourse(db *gorm.DB, userId uint, courseName, description string) error {
-	if !userExists(db, userId) {
-		return fmt.Errorf("User does not exist.")
-	}
-
 	currentCourse := models.Course{
 		Model:       gorm.Model{},
 		Name:        courseName,
@@ -33,7 +14,7 @@ func CreateCourse(db *gorm.DB, userId uint, courseName, description string) erro
 	}
 
 	if db.Model(models.Course{}).Create(&currentCourse).Error != nil {
-		return fmt.Errorf("Error when to create a course.")
+		return fmt.Errorf("Error when creating a course.")
 	}
 
 	db.Model(models.IsEnrolled{}).Create(models.IsEnrolled{
@@ -47,10 +28,6 @@ func CreateCourse(db *gorm.DB, userId uint, courseName, description string) erro
 }
 
 func EnrollToCourse(db *gorm.DB, userId, courseId uint) error {
-	if !userExists(db, userId) {
-		return fmt.Errorf("User does not exist.")
-	}
-
 	if userInCourse(db, userId, courseId) {
 		return fmt.Errorf("User is already in course.")
 	}
@@ -63,4 +40,60 @@ func EnrollToCourse(db *gorm.DB, userId, courseId uint) error {
 	})
 
 	return nil
+}
+
+func CreateExercise(db *gorm.DB, exercise models.ExerciseDTO, userId, courseId uint) error {
+	if !isOwner(db, userId, courseId) {
+		return fmt.Errorf("This user doesn't have permission to create a unit.")
+	}
+
+	testIds := []uint{}
+	for _, test := range exercise.TestData {
+		testIds = append(testIds, CreateTest(db, test))
+	}
+
+	db.Model(models.Exercise{}).Create(models.Exercise{
+		Model:       gorm.Model{},
+		Name:        exercise.Name,
+		Description: exercise.Description,
+		BaseCode:    exercise.BaseCode,
+		TestIds:     testIds,
+		Points:      exercise.Points,
+		UnitNumber:  exercise.UnitNumber,
+	})
+
+	return nil
+}
+
+func CreateTest(db *gorm.DB, test models.TestDTO) uint {
+	db.Model(models.Test{}).Create(models.Test{
+		Model:  gorm.Model{},
+		Name:   test.Name,
+		Input:  test.Input,
+		Output: test.Output,
+	})
+
+	var currentTestId uint
+	db.Model(models.Test{}).Select("ID").Last(&currentTestId)
+
+	return currentTestId
+}
+
+// ------------------------- Private functions -------------------------
+
+func isOwner(db *gorm.DB, userId uint, courseId uint) bool {
+	currentUser := models.IsEnrolled{}
+	db.Model(models.IsEnrolled{}).Where("UserId = ? AND CourseId = ?", userId, courseId).First(&currentUser)
+	return currentUser.IsOwner
+}
+
+func courseExists(db *gorm.DB, courseId uint) bool {
+	return db.Model(models.Course{}).Where("ID = ?", courseId).Error != nil
+}
+
+func userInCourse(db *gorm.DB, userId, courseId uint) bool {
+	if !courseExists(db, courseId) {
+		return false
+	}
+	return db.Model(models.IsEnrolled{}).Where("UserId = ? AND CourseId = ?", userId, courseId).Error != nil
 }
