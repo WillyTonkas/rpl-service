@@ -10,8 +10,8 @@ type User struct {
 
 type IsEnrolled struct {
 	gorm.Model
-	UserId   uint
-	CourseId uint
+	UserID   uint
+	CourseID uint
 }
 
 type Course struct {
