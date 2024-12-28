@@ -27,6 +27,22 @@ func CreateCourse(db *gorm.DB, userId uint, courseName, description string) erro
 	return nil
 }
 
+func RemoveStudent(db *gorm.DB, userId, courseId, studentId uint) error {
+	if !isOwner(db, userId, courseId) {
+		return fmt.Errorf("This user doesn't have permission to create a unit.")
+	}
+
+	if !userInCourse(db, studentId, courseId) {
+		return fmt.Errorf("The user does not exist in the course.")
+	}
+
+	var student models.IsEnrolled
+	db.Model(models.IsEnrolled{}).First(&student, "ID = ?", studentId)
+	db.Model(models.IsEnrolled{}).Delete(&student)
+
+	return nil
+}
+
 func EnrollToCourse(db *gorm.DB, userId, courseId uint) error {
 	if userInCourse(db, userId, courseId) {
 		return fmt.Errorf("User is already in course.")
