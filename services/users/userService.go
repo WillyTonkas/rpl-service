@@ -26,9 +26,46 @@ func EnrollToCourse(db *gorm.DB, userID, courseID uint) error {
 	return nil
 }
 
+func CreateCourse(db *gorm.DB, userID uint, courseName, description string) error {
+	currentCourse := models.Course{
+		Model:       gorm.Model{},
+		Name:        courseName,
+		Description: description,
+	}
+
+	if db.Model(models.Course{}).Create(&currentCourse).Error != nil {
+		return errors.New("error when creating a course")
+	}
+
+	db.Model(models.IsEnrolled{}).Create(models.IsEnrolled{
+		Model:    gorm.Model{},
+		UserID:   userID,
+		CourseID: currentCourse.ID,
+		IsOwner:  true,
+	})
+
+	return nil
+}
+
+func RemoveStudent(db *gorm.DB, userID, courseID, studentID uint) error {
+	if !isOwner(db, userID, courseID) {
+		return errors.New("this user doesn't have permission to remove any student")
+	}
+
+	if !userInCourse(db, studentID, courseID) {
+		return errors.New("the user does not exist in the course")
+	}
+
+	var student models.IsEnrolled
+	db.Model(models.IsEnrolled{}).First(&student, "ID = ?", studentID)
+	db.Model(models.IsEnrolled{}).Delete(&student)
+
+	return nil
+}
+
 func CreateExercise(db *gorm.DB, exercise models.ExerciseDTO, userID, courseID uint) error {
 	if !isOwner(db, userID, courseID) {
-		return errors.New("this user doesn't have permission to create a unit")
+		return errors.New("this user doesn't have permission to create an exercise")
 	}
 
 	var testIDs []uint
@@ -67,7 +104,7 @@ func CreateTest(db *gorm.DB, test models.TestDTO) uint {
 
 func isOwner(db *gorm.DB, userID uint, courseID uint) bool {
 	currentUser := models.IsEnrolled{}
-	db.Model(models.IsEnrolled{}).Where("UserId = ? AND CourseId = ?", userID, courseID).First(&currentUser)
+	db.Model(models.IsEnrolled{}).Where("UserID = ? AND CourseID = ?", userID, courseID).First(&currentUser)
 	return currentUser.IsOwner
 }
 
