@@ -4,20 +4,11 @@ import (
 	"gorm.io/gorm"
 )
 
-type User struct {
-	gorm.Model
-}
-
 type IsEnrolled struct {
 	gorm.Model
 	UserID   uint
 	CourseID uint
-}
-
-type Course struct {
-	gorm.Model
-	Name        string
-	Description string
+	IsOwner  bool
 }
 
 type Profile struct {
