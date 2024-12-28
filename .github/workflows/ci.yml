@@ -2,9 +2,9 @@ name: CI Workflow
 
 on:
   pull_request:
-    branches: ["main", "dev"]
+    branches: [ "main", "dev" ]
   push:
-    branches-ignore: ["main"]
+    branches-ignore: [ "main" ]
 
 jobs:
   lint-and-test:
@@ -38,9 +38,14 @@ jobs:
             echo "$unformatted"
             exit 1
           fi
+      - name: Run go vet
+        run: go vet ./...
 
       - name: Run golint
-        run: golint ./... || exit 1
+        uses: dominikh/staticcheck-action@v1.2.0
+        with:
+          version: 'latest'
+          flags: ./...
 
       - name: Run tests
         run: go test ./... -v
