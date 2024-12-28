@@ -27,15 +27,15 @@ func EnrollToCourse(db *gorm.DB, userID, courseID uuid.UUID) error {
 	return nil
 }
 
-func CreateCourse(db *gorm.DB, userID uuid.UUID, courseName, description string) error {
+func CreateCourse(db *gorm.DB, userID uuid.UUID, courseName, description string) (models.Course, error) {
 	currentCourse := models.Course{
 		Model:       gorm.Model{},
 		Name:        courseName,
 		Description: description,
 	}
 
-	if db.Model(models.Course{}).Create(&currentCourse).Error != nil {
-		return errors.New("error when creating a course")
+	if err := db.Model(models.Course{}).Create(&currentCourse).Error; err != nil {
+		return models.Course{}, errors.New("error when creating a course")
 	}
 
 	db.Model(models.IsEnrolled{}).Create(models.IsEnrolled{
@@ -45,7 +45,7 @@ func CreateCourse(db *gorm.DB, userID uuid.UUID, courseName, description string)
 		IsOwner:  true,
 	})
 
-	return nil
+	return currentCourse, nil
 }
 
 func RemoveStudent(db *gorm.DB, userID, courseID, studentID uuid.UUID) error {
@@ -69,9 +69,9 @@ func CreateExercise(db *gorm.DB, exercise models.ExerciseDTO, userID, courseID u
 		return errors.New("this user doesn't have permission to create an exercise")
 	}
 
-	var testIDs []uuid.UUID
+	var testIDs []string
 	for _, test := range exercise.TestData {
-		testIDs = append(testIDs, CreateTest(db, test))
+		testIDs = append(testIDs, CreateTest(db, test).String())
 	}
 
 	db.Model(models.Exercise{}).Create(models.Exercise{

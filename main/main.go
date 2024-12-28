@@ -3,12 +3,14 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"os"
 	"rpl-service/controllers"
+	"rpl-service/models"
 )
 
 // Should run the main web application
@@ -20,6 +22,11 @@ func main() {
 
 func startServer() {
 	db := startDatabase()
+
+	if db == nil {
+		fmt.Println("Error starting the database")
+		return
+	}
 
 	s, serverError := db.DB()
 	if serverError != nil {
@@ -43,6 +50,10 @@ func startServer() {
 		controllers.CourseExistsEndpoint.HandlerFunction(writer, request, db)
 	})
 
+	http.HandleFunc(controllers.CreateCourseEndpoint.Path, func(writer http.ResponseWriter, request *http.Request) {
+		controllers.CreateCourseEndpoint.HandlerFunction(writer, request, db)
+	})
+
 	serverPort := os.Getenv("SERVER_PORT")
 	fmt.Println(serverPort)
 
@@ -58,7 +69,12 @@ func startServer() {
 
 func startDatabase() *gorm.DB {
 	// Retrieve environment variables
-	host := os.Getenv("DATABASE_URL")
+	err := godotenv.Load(".env")
+	if err != nil {
+		return nil
+	}
+
+	host := os.Getenv("HOST")
 	user := os.Getenv("POSTGRES_USER")
 	password := os.Getenv("POSTGRES_PASSWORD")
 	dbname := os.Getenv("POSTGRES_DB")
@@ -77,5 +93,20 @@ func startDatabase() *gorm.DB {
 		log.Fatalf("failed to connect to the database: %v", err)
 	}
 
+	// Enable uuid-ossp extension
+	err = db.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"").Error
+	if err != nil {
+		log.Fatalf("failed to enable uuid-ossp extension: %v", err)
+	}
+
+	migrateSchemas(db)
+
 	return db
+}
+
+func migrateSchemas(db *gorm.DB) {
+	err := db.AutoMigrate(&models.Course{}, &models.Exercise{}, &models.Test{})
+	if err != nil {
+		log.Fatalf("failed to migrate database: %v", err)
+	}
 }
