@@ -14,7 +14,7 @@ func CreateCourse(db *gorm.DB, userId uint, courseName, description string) erro
 	}
 
 	if db.Model(models.Course{}).Create(&currentCourse).Error != nil {
-		return fmt.Errorf("Error when to create a course.")
+		return fmt.Errorf("Error when creating a course.")
 	}
 
 	db.Model(models.IsEnrolled{}).Create(models.IsEnrolled{
