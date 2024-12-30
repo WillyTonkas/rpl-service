@@ -51,6 +51,18 @@ func startServer() {
 		controllers.CreateCourseEndpoint.HandlerFunction(writer, request, db)
 	})
 
+	http.HandleFunc(controllers.EnrollToCourseEndpoint.Path, func(writer http.ResponseWriter, request *http.Request) {
+		controllers.CreateCourseEndpoint.HandlerFunction(writer, request, db)
+	})
+
+	http.HandleFunc(controllers.StudentExistsEndPoint.Path, func(writer http.ResponseWriter, request *http.Request) {
+		controllers.StudentExistsEndPoint.HandlerFunction(writer, request, db)
+	})
+
+	http.HandleFunc(controllers.DeleteStudentEndpoint.Path, func(writer http.ResponseWriter, request *http.Request) {
+		controllers.DeleteStudentEndpoint.HandlerFunction(writer, request, db)
+	})
+
 	serverPort := os.Getenv("SERVER_PORT")
 
 	if serverPort == constants.EmptyString {
