@@ -34,7 +34,7 @@ jobs:
         shell: /usr/bin/bash -e {0}
 
       - name: Build binary
-        run: go build -o ${{ env.BINARY_NAME }} ../../main/main.go
+        run: go build -o ${{ env.BINARY_NAME }} ./main/main.go
 
       - name: Upload Go artifact
         uses: actions/upload-artifact@v4
