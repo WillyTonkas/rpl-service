@@ -2,11 +2,12 @@ package users
 
 import (
 	"errors"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"rpl-service/models"
 )
 
-func EnrollToCourse(db *gorm.DB, userID, courseID uint) error {
+func EnrollToCourse(db *gorm.DB, userID, courseID uuid.UUID) error {
 	// TODO: delete the following line
 	// if !userExists(db, userID) {
 	//	return errors.New("user does not exist")
@@ -26,28 +27,32 @@ func EnrollToCourse(db *gorm.DB, userID, courseID uint) error {
 	return nil
 }
 
-func CreateCourse(db *gorm.DB, userID uint, courseName, description string) error {
+func CreateCourse(db *gorm.DB, userID uuid.UUID, courseName, description string) (models.Course, error) {
 	currentCourse := models.Course{
 		Model:       gorm.Model{},
 		Name:        courseName,
 		Description: description,
 	}
 
-	if db.Model(models.Course{}).Create(&currentCourse).Error != nil {
-		return errors.New("error when creating a course")
+	if err := db.Model(models.Course{}).Create(&currentCourse).Error; err != nil {
+		return models.Course{}, errors.New("error when creating a course")
 	}
 
-	db.Model(models.IsEnrolled{}).Create(models.IsEnrolled{
+	isEnrolled := models.IsEnrolled{
 		Model:    gorm.Model{},
 		UserID:   userID,
 		CourseID: currentCourse.ID,
 		IsOwner:  true,
-	})
+	}
 
-	return nil
+	if db.Model(models.IsEnrolled{}).Create(&isEnrolled).Error != nil {
+		return models.Course{}, errors.New("error when creating a course")
+	}
+
+	return currentCourse, nil
 }
 
-func RemoveStudent(db *gorm.DB, userID, courseID, studentID uint) error {
+func RemoveStudent(db *gorm.DB, userID, courseID, studentID uuid.UUID) error {
 	if !isOwner(db, userID, courseID) {
 		return errors.New("this user doesn't have permission to remove any student")
 	}
@@ -63,14 +68,14 @@ func RemoveStudent(db *gorm.DB, userID, courseID, studentID uint) error {
 	return nil
 }
 
-func CreateExercise(db *gorm.DB, exercise models.ExerciseDTO, userID, courseID uint) error {
+func CreateExercise(db *gorm.DB, exercise models.ExerciseDTO, userID, courseID uuid.UUID) error {
 	if !isOwner(db, userID, courseID) {
 		return errors.New("this user doesn't have permission to create an exercise")
 	}
 
-	var testIDs []uint
+	var testIDs []string
 	for _, test := range exercise.TestData {
-		testIDs = append(testIDs, CreateTest(db, test))
+		testIDs = append(testIDs, CreateTest(db, test).String())
 	}
 
 	db.Model(models.Exercise{}).Create(models.Exercise{
@@ -86,7 +91,7 @@ func CreateExercise(db *gorm.DB, exercise models.ExerciseDTO, userID, courseID u
 	return nil
 }
 
-func CreateTest(db *gorm.DB, test models.TestDTO) uint {
+func CreateTest(db *gorm.DB, test models.TestDTO) uuid.UUID {
 	db.Model(models.Test{}).Create(models.Test{
 		Model:  gorm.Model{},
 		Name:   test.Name,
@@ -94,15 +99,19 @@ func CreateTest(db *gorm.DB, test models.TestDTO) uint {
 		Output: test.Output,
 	})
 
-	var currentTestID uint
+	var currentTestID uuid.UUID
 	db.Model(models.Test{}).Select("ID").Last(&currentTestID)
 
 	return currentTestID
 }
 
+func CourseExists(db *gorm.DB, courseID uuid.UUID) bool {
+	return db.Model(models.Course{}).Where("ID = ?", courseID).Error == nil
+}
+
 // ------------------------- Private functions -------------------------
 
-func isOwner(db *gorm.DB, userID uint, courseID uint) bool {
+func isOwner(db *gorm.DB, userID, courseID uuid.UUID) bool {
 	currentUser := models.IsEnrolled{}
 	db.Model(models.IsEnrolled{}).Where("UserID = ? AND CourseID = ?", userID, courseID).First(&currentUser)
 	return currentUser.IsOwner
@@ -113,13 +122,9 @@ func isOwner(db *gorm.DB, userID uint, courseID uint) bool {
 //	return true
 //}
 
-func courseExists(db *gorm.DB, courseID uint) bool {
-	return db.Model(models.Course{}).Where("ID = ?", courseID).Error != nil
-}
-
-func userInCourse(db *gorm.DB, userID, courseID uint) bool {
-	if !courseExists(db, courseID) {
+func userInCourse(db *gorm.DB, userID, courseID uuid.UUID) bool {
+	if !CourseExists(db, courseID) {
 		return false
 	}
-	return db.Model(models.IsEnrolled{}).Where("UserID = ? AND CourseID = ?", userID, courseID).Error != nil
+	return db.Model(models.IsEnrolled{}).Where("UserID = ? AND CourseID = ?", userID, courseID).Error == nil
 }
