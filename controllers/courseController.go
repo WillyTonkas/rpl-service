@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"net/http"
+	"rpl-service/constants"
 	"rpl-service/models"
 	"rpl-service/services/users"
 )
@@ -13,7 +14,7 @@ const BaseURL = "/courses"
 
 func CourseExists(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 	courseID := r.PathValue("id") // Get the course ID from the URL
-	if courseID == "" {
+	if courseID == constants.EMPTY_STRING {
 		http.Error(w, "Course ID is required", http.StatusBadRequest)
 		return
 	}

@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"rpl-service/constants"
 	"rpl-service/controllers"
 	"rpl-service/models"
 )
@@ -52,7 +53,7 @@ func startServer() {
 
 	serverPort := os.Getenv("SERVER_PORT")
 
-	if serverPort == "" {
+	if serverPort == constants.EMPTY_STRING {
 		log.Panic("serverPort environment variable is not set")
 	}
 
@@ -75,7 +76,11 @@ func startDatabase() *gorm.DB {
 	dbname := os.Getenv("POSTGRES_DB")
 	port := os.Getenv("DATABASE_PORT")
 
-	if host == "" || user == "" || password == "" || dbname == "" || port == "" {
+	if host == constants.EMPTY_STRING ||
+		user == constants.EMPTY_STRING ||
+		password == constants.EMPTY_STRING ||
+		dbname == constants.EMPTY_STRING ||
+		port == constants.EMPTY_STRING {
 		log.Fatal("One or more database environment variables are not set")
 	}
 
