@@ -1,3 +1,3 @@
 package constants
 
-const EMPTY_STRING = ""
+const EmptyString = ""

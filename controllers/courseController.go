@@ -14,7 +14,7 @@ const BaseURL = "/courses"
 
 func CourseExists(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 	courseID := r.PathValue("id") // Get the course ID from the URL
-	if courseID == constants.EMPTY_STRING {
+	if courseID == constants.EmptyString {
 		http.Error(w, "Course ID is required", http.StatusBadRequest)
 		return
 	}

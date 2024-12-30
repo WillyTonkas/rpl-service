@@ -53,7 +53,7 @@ func startServer() {
 
 	serverPort := os.Getenv("SERVER_PORT")
 
-	if serverPort == constants.EMPTY_STRING {
+	if serverPort == constants.EmptyString {
 		log.Panic("serverPort environment variable is not set")
 	}
 
@@ -76,11 +76,11 @@ func startDatabase() *gorm.DB {
 	dbname := os.Getenv("POSTGRES_DB")
 	port := os.Getenv("DATABASE_PORT")
 
-	if host == constants.EMPTY_STRING ||
-		user == constants.EMPTY_STRING ||
-		password == constants.EMPTY_STRING ||
-		dbname == constants.EMPTY_STRING ||
-		port == constants.EMPTY_STRING {
+	if host == constants.EmptyString ||
+		user == constants.EmptyString ||
+		password == constants.EmptyString ||
+		dbname == constants.EmptyString ||
+		port == constants.EmptyString {
 		log.Fatal("One or more database environment variables are not set")
 	}
 
