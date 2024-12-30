@@ -30,6 +30,8 @@ jobs:
             echo "BINARY_NAME=rpl-service" >> $GITHUB_ENV
           else
             echo "BINARY_NAME=rpl-service-dev" >> $GITHUB_ENV
+          fi
+        shell: /usr/bin/bash -e {0}
 
       - name: Build binary
         run: go build -o ${{ env.BINARY_NAME }} ../../main/main.go
