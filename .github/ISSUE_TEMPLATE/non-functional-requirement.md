@@ -7,10 +7,6 @@ assignees: ''
 
 ---
 
-Certainly! Here’s a **Non-Functional Requirement (NFR) Template** to document your non-functional requirements effectively:
-
----
-
 ### **Non-Functional Requirement (NFR) Template**
 
 #### **1. Title**  
