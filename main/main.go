@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
@@ -65,10 +64,11 @@ func startServer() {
 
 func startDatabase() *gorm.DB {
 	// Retrieve environment variables
-	err := godotenv.Load(".env")
-	if err != nil {
-		return nil
-	}
+	//err := godotenv.Load(".env")
+	//if err != nil {
+	//	log.Fatalf("Error loading .env file: %v", err)
+	//	return nil
+	//}
 
 	host := os.Getenv("HOST")
 	user := os.Getenv("POSTGRES_USER")
@@ -76,12 +76,12 @@ func startDatabase() *gorm.DB {
 	dbname := os.Getenv("POSTGRES_DB")
 	port := os.Getenv("DATABASE_PORT")
 
-	if host == constants.EmptyString ||
-		user == constants.EmptyString ||
-		password == constants.EmptyString ||
-		dbname == constants.EmptyString ||
-		port == constants.EmptyString {
-		log.Fatal("One or more database environment variables are not set")
+	envVariables := []string{host, user, password, dbname, port}
+
+	for _, envVar := range envVariables {
+		if envVar == constants.EmptyString {
+			log.Fatal("One or more database environment variables are not set")
+		}
 	}
 
 	// Database connection string
