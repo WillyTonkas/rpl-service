@@ -109,6 +109,12 @@ func CourseExists(db *gorm.DB, courseID uuid.UUID) bool {
 	return db.Model(models.Course{}).Where("ID = ?", courseID).Error == nil
 }
 
+func IsUserInCourse(db *gorm.DB, userID, courseID uuid.UUID) bool {
+	var enrollment models.IsEnrolled
+	result := db.Where("user_id = ? AND course_id = ?", userID, courseID).First(&enrollment)
+	return result.Error == nil
+}
+
 // ------------------------- Private functions -------------------------
 
 func isOwner(db *gorm.DB, userID, courseID uuid.UUID) bool {
