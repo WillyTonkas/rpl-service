@@ -8,14 +8,14 @@ import (
 
 type Course struct {
 	gorm.Model
-	ID          uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4()" json:"id"`
+	ID          uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4()" json:"ID"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 }
 
 type Exercise struct {
 	gorm.Model
-	ID          uuid.UUID      `gorm:"type:uuid;default:uuid_generate_v4()"`
+	ID          uuid.UUID      `gorm:"type:uuid;default:uuid_generate_v4()" json:"ID"`
 	Name        string         `json:"name"`
 	Description string         `json:"description"`
 	BaseCode    string         `json:"base-code"`
@@ -26,7 +26,7 @@ type Exercise struct {
 
 type Test struct {
 	gorm.Model
-	ID     uuid.UUID      `gorm:"type:uuid;default:uuid_generate_v4()"`
+	ID     uuid.UUID      `gorm:"type:uuid;default:uuid_generate_v4()" json:"ID"`
 	Name   string         `json:"name"`
 	Input  pq.StringArray `json:"input" gorm:"type:text[]"`
 	Output pq.StringArray `json:"output" gorm:"type:text[]"`

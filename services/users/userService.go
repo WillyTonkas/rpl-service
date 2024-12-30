@@ -8,7 +8,7 @@ import (
 )
 
 func EnrollToCourse(db *gorm.DB, userID, courseID uuid.UUID) error {
-	// TODO: delete the following line
+	// TODO: change the following line
 	// if !userExists(db, userID) {
 	//	return errors.New("user does not exist")
 	//}
