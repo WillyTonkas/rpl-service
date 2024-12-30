@@ -22,7 +22,6 @@ func main() {
 
 func startServer() {
 	db := startDatabase()
-
 	if db == nil {
 		fmt.Println("Error starting the database")
 		return
@@ -42,9 +41,6 @@ func startServer() {
 	}(s)
 
 	// Here should go the functions for each endpoint
-	http.HandleFunc("/", func(_ http.ResponseWriter, _ *http.Request) {
-		fmt.Println("Hello, World!") // Mock endpoint
-	})
 
 	http.HandleFunc(controllers.CourseExistsEndpoint.Path, func(writer http.ResponseWriter, request *http.Request) {
 		controllers.CourseExistsEndpoint.HandlerFunction(writer, request, db)
@@ -55,7 +51,6 @@ func startServer() {
 	})
 
 	serverPort := os.Getenv("SERVER_PORT")
-	fmt.Println(serverPort)
 
 	if serverPort == "" {
 		log.Panic("serverPort environment variable is not set")
@@ -105,7 +100,7 @@ func startDatabase() *gorm.DB {
 }
 
 func migrateSchemas(db *gorm.DB) {
-	err := db.AutoMigrate(&models.Course{}, &models.Exercise{}, &models.Test{})
+	err := db.AutoMigrate(&models.Course{}, &models.Exercise{}, &models.Test{}, &models.IsEnrolled{})
 	if err != nil {
 		log.Fatalf("failed to migrate database: %v", err)
 	}

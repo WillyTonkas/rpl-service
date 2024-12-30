@@ -38,12 +38,16 @@ func CreateCourse(db *gorm.DB, userID uuid.UUID, courseName, description string)
 		return models.Course{}, errors.New("error when creating a course")
 	}
 
-	db.Model(models.IsEnrolled{}).Create(models.IsEnrolled{
+	isEnrolled := models.IsEnrolled{
 		Model:    gorm.Model{},
 		UserID:   userID,
 		CourseID: currentCourse.ID,
 		IsOwner:  true,
-	})
+	}
+
+	if db.Model(models.IsEnrolled{}).Create(&isEnrolled).Error != nil {
+		return models.Course{}, errors.New("error when creating a course")
+	}
 
 	return currentCourse, nil
 }
@@ -102,7 +106,7 @@ func CreateTest(db *gorm.DB, test models.TestDTO) uuid.UUID {
 }
 
 func CourseExists(db *gorm.DB, courseID uuid.UUID) bool {
-	return db.Model(models.Course{}).Where("ID = ?", courseID).Error != nil
+	return db.Model(models.Course{}).Where("ID = ?", courseID).Error == nil
 }
 
 // ------------------------- Private functions -------------------------
@@ -122,5 +126,5 @@ func userInCourse(db *gorm.DB, userID, courseID uuid.UUID) bool {
 	if !CourseExists(db, courseID) {
 		return false
 	}
-	return db.Model(models.IsEnrolled{}).Where("UserID = ? AND CourseID = ?", userID, courseID).Error != nil
+	return db.Model(models.IsEnrolled{}).Where("UserID = ? AND CourseID = ?", userID, courseID).Error == nil
 }
