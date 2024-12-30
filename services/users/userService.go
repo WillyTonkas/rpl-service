@@ -13,7 +13,7 @@ func EnrollToCourse(db *gorm.DB, userID, courseID uuid.UUID) error {
 	//	return errors.New("user does not exist")
 	//}
 
-	if userInCourse(db, userID, courseID) {
+	if IsUserInCourse(db, userID, courseID) {
 		return errors.New("user is already in course")
 	}
 
@@ -57,7 +57,7 @@ func RemoveStudent(db *gorm.DB, userID, courseID, studentID uuid.UUID) error {
 		return errors.New("this user doesn't have permission to remove any student")
 	}
 
-	if !userInCourse(db, studentID, courseID) {
+	if !IsUserInCourse(db, studentID, courseID) {
 		return errors.New("the user does not exist in the course")
 	}
 
@@ -105,32 +105,26 @@ func CreateTest(db *gorm.DB, test models.TestDTO) uuid.UUID {
 	return currentTestID
 }
 
+func IsUserInCourse(db *gorm.DB, userID, courseID uuid.UUID) bool {
+	if !CourseExists(db, courseID) {
+		return false
+	}
+	return db.Model(models.IsEnrolled{}).Where("UserID = ? AND CourseID = ?", userID, courseID).Error == nil
+}
+
+// ------------------------- Private functions -------------------------
+
 func CourseExists(db *gorm.DB, courseID uuid.UUID) bool {
 	return db.Model(models.Course{}).Where("ID = ?", courseID).Error == nil
 }
 
-func IsUserInCourse(db *gorm.DB, userID, courseID uuid.UUID) bool {
-	var enrollment models.IsEnrolled
-	result := db.Where("user_id = ? AND course_id = ?", userID, courseID).First(&enrollment)
-	return result.Error == nil
-}
-
-// ------------------------- Private functions -------------------------
+// func userExists(db *gorm.DB, id uint) bool {
+//	// TODO: use Auth0
+//	return true
+//}
 
 func isOwner(db *gorm.DB, userID, courseID uuid.UUID) bool {
 	currentUser := models.IsEnrolled{}
 	db.Model(models.IsEnrolled{}).Where("UserID = ? AND CourseID = ?", userID, courseID).First(&currentUser)
 	return currentUser.IsOwner
-}
-
-// func userExists(db *gorm.DB, id uint) bool {
-//	//TODO: use Auth0
-//	return true
-//}
-
-func userInCourse(db *gorm.DB, userID, courseID uuid.UUID) bool {
-	if !CourseExists(db, courseID) {
-		return false
-	}
-	return db.Model(models.IsEnrolled{}).Where("UserID = ? AND CourseID = ?", userID, courseID).Error == nil
 }
