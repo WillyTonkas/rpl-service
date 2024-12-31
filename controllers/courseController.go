@@ -70,8 +70,8 @@ func CreateCourse(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 // TODO: Test this function after implementing auth0.
 func EnrollToCourse(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 	var enrollmentRequest struct {
-		UserID   uuid.UUID `json:"user_id"`
-		CourseID uuid.UUID `json:"course_id"`
+		UserID   uuid.UUID `json:"UserID"`
+		CourseID uuid.UUID `json:"CourseID"`
 	}
 
 	if json.NewDecoder(r.Body).Decode(&enrollmentRequest) != nil {
@@ -96,8 +96,8 @@ func EnrollToCourse(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 // TODO: Test this function after implementing auth0.
 func StudentExists(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 	var enrollmentRequest struct {
-		UserID   uuid.UUID `json:"user_id"`
-		CourseID uuid.UUID `json:"course_id"`
+		UserID   uuid.UUID `json:"UserID"`
+		CourseID uuid.UUID `json:"CourseID"`
 	}
 
 	if json.NewDecoder(r.Body).Decode(&enrollmentRequest) != nil {
@@ -121,9 +121,9 @@ func StudentExists(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 // TODO: Test this function after implementing auth0.
 func DeleteStudent(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 	var deleteRequest struct {
-		UserID    uuid.UUID `json:"user_id"`
-		CourseID  uuid.UUID `json:"course_id"`
-		StudentID uuid.UUID `json:"student_id"`
+		UserID    uuid.UUID `json:"UserID"`
+		CourseID  uuid.UUID `json:"CourseID"`
+		StudentID uuid.UUID `json:"StudentID"`
 	}
 
 	if json.NewDecoder(r.Body).Decode(&deleteRequest) != nil {
