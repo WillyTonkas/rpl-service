@@ -15,7 +15,7 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/pgx/v5 v5.7.2 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
-	golang.org/x/crypto v0.31.0 // indirect
+	golang.org/x/crypto v0.32.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
 )
 
@@ -29,4 +29,11 @@ require (
 	//golang.org/x/crypto v0.17.0 // indirect
 	//golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
+)
+
+require (
+	github.com/coreos/go-oidc/v3 v3.8.0
+	github.com/gin-contrib/sessions v0.0.5
+	github.com/gin-gonic/gin v1.9.1
+	golang.org/x/oauth2 v0.15.0
 )

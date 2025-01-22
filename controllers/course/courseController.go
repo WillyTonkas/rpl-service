@@ -1,4 +1,4 @@
-package controllers
+package course
 
 import (
 	"encoding/json"
@@ -10,9 +10,10 @@ import (
 	"rpl-service/services/users"
 )
 
-const BaseURL = "/courses"
+// Controllers should have all the functions and logic, routers should expose the endpoints.
+// This is the controller for the course entity.
 
-func CourseExists(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
+func Exists(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 	courseID := r.PathValue("id") // Get the course ID from the URL
 	if courseID == constants.EmptyString {
 		http.Error(w, "Course ID is required", http.StatusBadRequest)
@@ -24,20 +25,20 @@ func CourseExists(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 		return
 	}
 
-	// Should return whether a user with that ID exists
+	// Should return whether a user with that ID Exists
 	if !users.CourseExists(db, courseUUID) { // TODO: change package name
 		http.Error(w, "Course not found", http.StatusNotFound)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	_, err = w.Write([]byte("Course exists"))
+	_, err = w.Write([]byte("Course Exists"))
 	if err != nil {
 		return
 	}
 }
 
-func CreateCourse(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
-	// Should create a new course
+func Create(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
+	// Should Create a new course
 	var body models.Course
 	err := json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
@@ -48,7 +49,7 @@ func CreateCourse(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 	userID := uuid.New() // TODO: get the actual userID
 	currentCourse, creatingCourseErr := users.CreateCourse(db, userID, body.Name, body.Description)
 	if creatingCourseErr != nil {
-		http.Error(w, "Failed to create course", http.StatusInternalServerError)
+		http.Error(w, "Failed to Create course", http.StatusInternalServerError)
 		return
 	}
 
@@ -67,7 +68,7 @@ func CreateCourse(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 	}
 }
 
-// TODO: Test this function after implementing auth0.
+// EnrollToCourse TODO: Test this function after implementing auth0.
 func EnrollToCourse(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 	var enrollmentRequest struct {
 		UserID   uuid.UUID `json:"UserID"`
@@ -93,7 +94,7 @@ func EnrollToCourse(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 	}
 }
 
-// TODO: Test this function after implementing auth0.
+// StudentExists TODO: Test this function after implementing auth0.
 func StudentExists(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 	var enrollmentRequest struct {
 		UserID   uuid.UUID `json:"UserID"`
@@ -118,7 +119,7 @@ func StudentExists(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 	}
 }
 
-// TODO: Test this function after implementing auth0.
+// DeleteStudent TODO: Test this function after implementing auth0.
 func DeleteStudent(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 	var deleteRequest struct {
 		UserID    uuid.UUID `json:"UserID"`
@@ -143,34 +144,4 @@ func DeleteStudent(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 		http.Error(w, "Failed to write response", http.StatusInternalServerError)
 		return
 	}
-}
-
-var CourseExistsEndpoint = models.Endpoint{
-	Method:          models.GET,
-	Path:            BaseURL + "/course/exists/{id}",
-	HandlerFunction: CourseExists,
-}
-
-var CreateCourseEndpoint = models.Endpoint{
-	Method:          models.POST,
-	Path:            BaseURL + "/course",
-	HandlerFunction: CreateCourse,
-}
-
-var EnrollToCourseEndpoint = models.Endpoint{
-	Method:          models.POST,
-	Path:            BaseURL + "/enroll",
-	HandlerFunction: EnrollToCourse,
-}
-
-var StudentExistsEndPoint = models.Endpoint{
-	Method:          models.POST,
-	Path:            BaseURL + "/check-enrollment",
-	HandlerFunction: StudentExists,
-}
-
-var DeleteStudentEndpoint = models.Endpoint{
-	Method:          models.DELETE,
-	Path:            BaseURL + "/delete-student",
-	HandlerFunction: DeleteStudent,
 }
