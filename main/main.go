@@ -4,11 +4,10 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
-	database "rpl-service/config"
+	"rpl-service/config"
 	"rpl-service/constants"
-	"rpl-service/controllers/course"
+	"rpl-service/platform/router"
 )
 
 // Should run the main web application
@@ -19,7 +18,7 @@ func main() {
 }
 
 func startServer() {
-	db := database.StartDatabase()
+	db := config.StartDatabase()
 	if db == nil {
 		fmt.Println("Error starting the database")
 		return
@@ -38,36 +37,26 @@ func startServer() {
 		}
 	}(s)
 
-	// Here should go the functions for each endpoint
+	// Initialize authenticator
+	//auth, err := authenticator.New()
+	//if err != nil {
+	//	fmt.Println("Failed to start authenticator")
+	//	return
+	//}
 
-	http.HandleFunc(course.ExistsEndpoint.Path, func(writer http.ResponseWriter, request *http.Request) {
-		course.ExistsEndpoint.HandlerFunction(writer, request, db)
-	})
-
-	http.HandleFunc(course.CreateCourseEndpoint.Path, func(writer http.ResponseWriter, request *http.Request) {
-		course.CreateCourseEndpoint.HandlerFunction(writer, request, db)
-	})
-
-	http.HandleFunc(course.EnrollToCourseEndpoint.Path, func(writer http.ResponseWriter, request *http.Request) {
-		course.EnrollToCourseEndpoint.HandlerFunction(writer, request, db)
-	})
-
-	http.HandleFunc(course.StudentExistsEndPoint.Path, func(writer http.ResponseWriter, request *http.Request) {
-		course.StudentExistsEndPoint.HandlerFunction(writer, request, db)
-	})
-
-	http.HandleFunc(course.DeleteStudentEndpoint.Path, func(writer http.ResponseWriter, request *http.Request) {
-		course.DeleteStudentEndpoint.HandlerFunction(writer, request, db)
-	})
+	// Initialize the ginRouter
+	ginRouter := router.New()
+	config.InitializeRoutes(ginRouter, db)
 
 	serverPort := os.Getenv("SERVER_PORT")
 
 	if serverPort == constants.EmptyString {
-		log.Panic("serverPort environment variable is not set")
+		log.Panic("SERVER_PORT environment variable is not set")
 	}
 
-	serverError = http.ListenAndServe(":"+serverPort, nil)
-	if serverError != nil {
+	routerError := ginRouter.Run(":" + serverPort)
+	if routerError != nil {
+		fmt.Println("Failed to start server")
 		return
 	}
 }

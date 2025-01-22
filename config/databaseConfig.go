@@ -1,4 +1,4 @@
-package database
+package config
 
 import (
 	"fmt"
@@ -11,10 +11,9 @@ import (
 )
 
 func StartDatabase() *gorm.DB {
-	// TODO: clean this commented code, catch error cases
 	// Retrieve environment variables
-	// err := godotenv.Load(".env")
-	// if err != nil {
+	//err := godotenv.Load(".env")
+	//if err != nil {
 	//	log.Fatalf("Error loading .env file: %v", err)
 	//	return nil
 	//}
