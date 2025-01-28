@@ -1,8 +1,10 @@
 package config
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"net/http"
 	"rpl-service/controllers/course"
 	"rpl-service/models"
 	"rpl-service/platform/middleware"
@@ -22,13 +24,27 @@ func mapToGinRoute(router *gin.Engine, endpoint models.Endpoint, db *gorm.DB) {
 		"DELETE": router.DELETE,
 	}
 
+	// Validate method exists
+	method, exists := methods[endpoint.Method]
+	if !exists {
+		panic(fmt.Sprintf("Unsupported method: %s", endpoint.Method))
+	}
+
+	// Create the base handler
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		endpoint.HandlerFunction(w, r, db)
+	}
+
+	// Apply middleware if the route is protected
 	if endpoint.IsProtected {
-		methods[endpoint.Method](endpoint.Path, middleware.IsAuthenticated, func(ctx *gin.Context) {
-			endpoint.HandlerFunction(ctx.Writer, ctx.Request, db)
-		})
+		method(endpoint.Path, gin.WrapH(middleware.EnsureValidToken()(
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				handler(w, r)
+			}))))
 	} else {
-		methods[endpoint.Method](endpoint.Path, func(ctx *gin.Context) {
-			endpoint.HandlerFunction(ctx.Writer, ctx.Request, db)
-		})
+		// Unprotected route
+		method(endpoint.Path, gin.WrapF(func(w http.ResponseWriter, r *http.Request) {
+			handler(w, r)
+		}))
 	}
 }

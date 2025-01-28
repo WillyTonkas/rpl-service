@@ -7,6 +7,7 @@ import (
 	"os"
 	"rpl-service/config"
 	"rpl-service/constants"
+	"rpl-service/platform/authenticator"
 	"rpl-service/platform/router"
 )
 
@@ -38,15 +39,14 @@ func startServer() {
 	}(s)
 
 	// Initialize authenticator
-	//auth, err := authenticator.New()
-	//if err != nil {
-	//	fmt.Println("Failed to start authenticator")
-	//	return
-	//}
+	auth, err := authenticator.New()
+	if err != nil {
+		log.Panicf("Failed to start authenticator: %v", err)
+		return
+	}
 
 	// Initialize the ginRouter
-	ginRouter := router.New()
-	config.InitializeRoutes(ginRouter, db)
+	ginRouter := router.New(auth, db)
 
 	serverPort := os.Getenv("SERVER_PORT")
 

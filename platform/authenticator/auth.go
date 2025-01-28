@@ -3,10 +3,10 @@ package authenticator
 import (
 	"context"
 	"errors"
-	"fmt"
+	"os"
+
 	"github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
-	"os"
 )
 
 // Authenticator is used to authenticate our users.
@@ -17,23 +17,17 @@ type Authenticator struct {
 
 // New instantiates the *Authenticator.
 func New() (*Authenticator, error) {
-	domain := os.Getenv("AUTH0_DOMAIN")
-	issuer := "https://" + domain + "/"
-
-	fmt.Println(issuer)
-
 	provider, err := oidc.NewProvider(
 		context.Background(),
-		issuer,
+		"https://"+os.Getenv("AUTH0_DOMAIN")+"/",
 	)
 	if err != nil {
-		fmt.Println("Error creating the provider")
 		return nil, err
 	}
 
 	conf := oauth2.Config{
-		ClientID:     os.Getenv("AUTH0_CLIENT_ID"),
-		ClientSecret: os.Getenv("AUTH0_CLIENT_SECRET"),
+		ClientID:     os.Getenv("AUTH0_TEST_CLIENT_ID"),
+		ClientSecret: os.Getenv("AUTH0_TEST_CLIENT_SECRET"),
 		RedirectURL:  os.Getenv("AUTH0_CALLBACK_URL"),
 		Endpoint:     provider.Endpoint(),
 		Scopes:       []string{oidc.ScopeOpenID, "profile"},

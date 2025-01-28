@@ -11,9 +11,10 @@ import (
 )
 
 func StartDatabase() *gorm.DB {
-	// Retrieve environment variables
-	//err := godotenv.Load(".env")
-	//if err != nil {
+	// Uncomment these lines when running in local
+	// // Retrieve environment variables
+	// err := godotenv.Load(".env")
+	// if err != nil {
 	//	log.Fatalf("Error loading .env file: %v", err)
 	//	return nil
 	//}

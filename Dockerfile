@@ -15,4 +15,6 @@ WORKDIR /root/
 
 COPY --from=builder /app/rpl-service .
 
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
 CMD ["./rpl-service"]
