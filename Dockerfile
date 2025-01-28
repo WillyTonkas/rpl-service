@@ -1,4 +1,4 @@
-FROM golang:1.23 AS builder
+FROM golang:1.23-alpine AS builder
 
 WORKDIR /app
 
@@ -14,5 +14,7 @@ FROM scratch
 WORKDIR /root/
 
 COPY --from=builder /app/rpl-service .
+
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 CMD ["./rpl-service"]
