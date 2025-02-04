@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 	"net/http"
 	"rpl-service/constants"
-	"rpl-service/models"
+	"rpl-service/mappers"
 	"rpl-service/services/users"
 )
 
@@ -39,14 +39,23 @@ func Exists(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 
 func Create(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 	// Should Create a new course
-	var body models.Course
-	err := json.NewDecoder(r.Body).Decode(&body)
-	if err != nil {
+	body, getCourseRequestErr := mappers.GetCourseRequest(r)
+	if getCourseRequestErr != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	userID := uuid.New() // TODO: get the actual userID
+	userIDString, getIDError := mappers.GetUserID(r)
+	if getIDError != nil {
+		http.Error(w, "Failed to get user ID", http.StatusInternalServerError)
+		return
+	}
+	userID, parseErr := uuid.Parse(userIDString)
+	if parseErr != nil {
+		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		return
+	}
+
 	currentCourse, creatingCourseErr := users.CreateCourse(db, userID, body.Name, body.Description)
 	if creatingCourseErr != nil {
 		http.Error(w, "Failed to Create course", http.StatusInternalServerError)
@@ -70,25 +79,21 @@ func Create(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 
 // EnrollToCourse TODO: Test this function after implementing auth0.
 func EnrollToCourse(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
-	var enrollmentRequest struct {
-		UserID   uuid.UUID `json:"UserID"`
-		CourseID uuid.UUID `json:"CourseID"`
-	}
-
-	if json.NewDecoder(r.Body).Decode(&enrollmentRequest) != nil {
+	enrollmentRequest, enrollmentRequestErr := mappers.GetEnrolledRequest(r)
+	if enrollmentRequestErr != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	err := users.EnrollToCourse(db, enrollmentRequest.UserID, enrollmentRequest.CourseID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	enrollErr := users.EnrollToCourse(db, enrollmentRequest.UserID, enrollmentRequest.CourseID)
+	if enrollErr != nil {
+		http.Error(w, enrollErr.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	_, err = w.Write([]byte("User enrolled in course successfully"))
-	if err != nil {
+	_, writeErr := w.Write([]byte("User enrolled in course successfully"))
+	if writeErr != nil {
 		http.Error(w, "Failed to write response", http.StatusInternalServerError)
 		return
 	}
@@ -96,12 +101,8 @@ func EnrollToCourse(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 
 // StudentExists TODO: Test this function after implementing auth0.
 func StudentExists(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
-	var enrollmentRequest struct {
-		UserID   uuid.UUID `json:"UserID"`
-		CourseID uuid.UUID `json:"CourseID"`
-	}
-
-	if json.NewDecoder(r.Body).Decode(&enrollmentRequest) != nil {
+	enrollmentRequest, enrollmentRequestErr := mappers.GetEnrolledRequest(r)
+	if enrollmentRequestErr != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -121,13 +122,8 @@ func StudentExists(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 
 // DeleteStudent TODO: Test this function after implementing auth0.
 func DeleteStudent(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
-	var deleteRequest struct {
-		UserID    uuid.UUID `json:"UserID"`
-		CourseID  uuid.UUID `json:"CourseID"`
-		StudentID uuid.UUID `json:"StudentID"`
-	}
-
-	if json.NewDecoder(r.Body).Decode(&deleteRequest) != nil {
+	deleteRequest, deleteRequestErr := mappers.GetDeleteRequest(r)
+	if deleteRequestErr != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}

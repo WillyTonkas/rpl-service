@@ -8,11 +8,6 @@ import (
 )
 
 func EnrollToCourse(db *gorm.DB, userID, courseID uuid.UUID) error {
-	// TODO: change the following line
-	// if !userExists(db, userID) {
-	//	return errors.New("user does not exist")
-	//}
-
 	if IsUserInCourse(db, userID, courseID) {
 		return errors.New("user is already in course")
 	}
@@ -117,11 +112,6 @@ func IsUserInCourse(db *gorm.DB, userID, courseID uuid.UUID) bool {
 func CourseExists(db *gorm.DB, courseID uuid.UUID) bool {
 	return db.Model(models.Course{}).Where("ID = ?", courseID).Error == nil
 }
-
-// func userExists(db *gorm.DB, id uint) bool {
-//	// TODO: use Auth0
-//	return true
-//}
 
 func isOwner(db *gorm.DB, userID, courseID uuid.UUID) bool {
 	currentUser := models.IsEnrolled{}
