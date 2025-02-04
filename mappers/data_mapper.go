@@ -13,7 +13,6 @@ import (
 	"rpl-service/constants"
 	"rpl-service/models"
 	"strings"
-	"time"
 )
 
 func GetCourseRequest(r *http.Request) (models.Course, error) {
@@ -53,7 +52,7 @@ func GetUserID(r *http.Request) (string, error) {
 	}
 
 	// Set up token validator
-	provider := jwks.NewCachingProvider(issuer, 5*time.Minute)
+	provider := jwks.NewCachingProvider(issuer, constants.ProviderDuration)
 	jwtValidator, err := validator.New(
 		provider.KeyFunc,
 		validator.RS256,
@@ -80,7 +79,7 @@ func GetUserID(r *http.Request) (string, error) {
 	// Get user ID from subject
 	sub := claims.RegisteredClaims.Subject
 	parts := strings.Split(sub, "|")
-	if len(parts) != 2 {
+	if len(parts) != constants.PartsOfID {
 		return constants.EmptyString, errors.New("invalid subject format")
 	}
 
