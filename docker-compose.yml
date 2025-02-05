@@ -23,5 +23,13 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
 
+  runner:
+    container_name: code-runner
+    image: "gchr.io/willytonkas/code-runner:latest"
+    depends_on:
+      - app
+    ports:
+      - ${RUNNER_PORT}:${RUNNER_PORT}
+
 volumes:
   db_data:

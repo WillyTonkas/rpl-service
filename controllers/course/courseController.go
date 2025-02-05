@@ -38,7 +38,7 @@ func Exists(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 }
 
 func Create(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
-	// Should Create a new course
+	// Should create a new course
 	var body models.Course
 	err := json.NewDecoder(r.Body).Decode(&body)
 	if err != nil {
