@@ -10,14 +10,10 @@ import (
 	"rpl-service/services/exercises"
 )
 
-/**
-{
-	"exerciseID": "...",
-	"code" : "..."
-}
-*/
+var exerciseService = exercises.ExerciseService{}
 
 func SolveExercise(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
+	// TODO: shorten function
 	// With exerciseId, I should search for all its tests, run one by one, and then send the result of each one as JSONs
 	exerciseID, err := uuid.Parse(r.PathValue("exerciseId"))
 	if err != nil {
@@ -44,7 +40,7 @@ func SolveExercise(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 		http.Error(w, "Invalid body format", http.StatusBadRequest)
 		return
 	}
-	results, exerciseError := exercises.SolveExercise(exerciseID, db, response.ExerciseCode)
+	results, exerciseError := exerciseService.SolveExercise(exerciseID, db, response.ExerciseCode)
 	if exerciseError != nil {
 		http.Error(w, "Error while executing tests", http.StatusInternalServerError)
 		return

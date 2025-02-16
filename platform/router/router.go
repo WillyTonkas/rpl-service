@@ -6,7 +6,7 @@ import (
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"rpl-service/config"
+	config "rpl-service/config/router"
 	"rpl-service/platform/authenticator"
 )
 

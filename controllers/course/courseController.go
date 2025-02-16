@@ -5,13 +5,16 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"net/http"
-	"rpl-service/constants"
+	"rpl-service/config/constants"
 	"rpl-service/models"
 	"rpl-service/services/users"
 )
 
 // Controllers should have all the functions and logic, routers should expose the endpoints.
 // This is the controller for the course entity.
+
+// TODO: Create a specialized repository for Courses
+var courseService = users.CourseService{}
 
 func Exists(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 	courseID := r.PathValue("id") // Get the course ID from the URL
@@ -26,7 +29,7 @@ func Exists(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 	}
 
 	// Should return whether a user with that ID Exists
-	if !users.CourseExists(db, courseUUID) { // TODO: change package name
+	if !courseService.CourseExists(db, courseUUID) {
 		http.Error(w, "Course not found", http.StatusNotFound)
 		return
 	}
@@ -47,7 +50,7 @@ func Create(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 	}
 
 	userID := uuid.New() // TODO: get the actual userID
-	currentCourse, creatingCourseErr := users.CreateCourse(db, userID, body.Name, body.Description)
+	currentCourse, creatingCourseErr := courseService.CreateCourse(db, userID, body.Name, body.Description)
 	if creatingCourseErr != nil {
 		http.Error(w, "Failed to Create course", http.StatusInternalServerError)
 		return
@@ -80,7 +83,7 @@ func EnrollToCourse(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 		return
 	}
 
-	err := users.EnrollToCourse(db, enrollmentRequest.UserID, enrollmentRequest.CourseID)
+	err := courseService.EnrollToCourse(db, enrollmentRequest.UserID, enrollmentRequest.CourseID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -106,7 +109,7 @@ func StudentExists(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 		return
 	}
 
-	if !users.IsUserInCourse(db, enrollmentRequest.UserID, enrollmentRequest.CourseID) {
+	if !courseService.IsUserInCourse(db, enrollmentRequest.UserID, enrollmentRequest.CourseID) {
 		http.Error(w, "User is not enrolled in the course", http.StatusNotFound)
 		return
 	}
@@ -132,7 +135,7 @@ func DeleteStudent(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 		return
 	}
 
-	err := users.RemoveStudent(db, deleteRequest.UserID, deleteRequest.CourseID, deleteRequest.StudentID)
+	err := courseService.RemoveStudent(db, deleteRequest.UserID, deleteRequest.CourseID, deleteRequest.StudentID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

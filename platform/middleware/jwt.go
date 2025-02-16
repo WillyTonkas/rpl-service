@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"rpl-service/constants"
+	"rpl-service/config/constants"
 	"time"
 
 	jwtmiddleware "github.com/auth0/go-jwt-middleware/v2"
