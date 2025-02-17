@@ -106,8 +106,8 @@ func (s *ExerciseService) getTestResults(tests []models.Test, exerciseCode strin
 			return []models.ExerciseResult{}, postErr
 		}
 		testResults = append(testResults, mappers.SolveExerciseResponseToResult(response, exercise.Name, test.Name))
-		closeErr := response.Body.Close()
-		if closeErr != nil {
+
+		if closeErr := response.Body.Close(); closeErr != nil {
 			return nil, closeErr
 		}
 	}
