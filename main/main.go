@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"rpl-service/config"
-	"rpl-service/constants"
+	"rpl-service/config/constants"
+	databaseConfig "rpl-service/config/database"
 	"rpl-service/platform/authenticator"
-	"rpl-service/platform/router"
+	routerConfig "rpl-service/platform/router"
 )
 
 // Should run the main web application
@@ -19,7 +19,7 @@ func main() {
 }
 
 func startServer() {
-	db := config.StartDatabase()
+	db := databaseConfig.StartDatabase()
 	if db == nil {
 		fmt.Println("Error starting the database")
 		return
@@ -46,7 +46,7 @@ func startServer() {
 	}
 
 	// Initialize the ginRouter
-	ginRouter := router.New(auth, db)
+	ginRouter := routerConfig.New(auth, db)
 
 	serverPort := os.Getenv("SERVER_PORT")
 

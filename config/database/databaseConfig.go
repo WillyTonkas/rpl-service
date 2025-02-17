@@ -1,4 +1,4 @@
-package config
+package database
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"os"
-	"rpl-service/constants"
+	"rpl-service/config/constants"
 	"rpl-service/models"
 )
 

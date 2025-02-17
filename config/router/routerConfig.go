@@ -1,4 +1,4 @@
-package config
+package router
 
 import (
 	"fmt"
@@ -6,12 +6,20 @@ import (
 	"gorm.io/gorm"
 	"net/http"
 	"rpl-service/controllers/course"
+	"rpl-service/controllers/exercise"
 	"rpl-service/models"
 	"rpl-service/platform/middleware"
 )
 
 func InitializeRoutes(router *gin.Engine, db *gorm.DB) {
-	for _, endpoint := range course.Endpoints {
+	initializeRoutes(router, db, course.Endpoints)
+	initializeRoutes(router, db, exercise.Endpoints)
+}
+
+// Private methods
+
+func initializeRoutes(router *gin.Engine, db *gorm.DB, endpoints []models.Endpoint) {
+	for _, endpoint := range endpoints {
 		mapToGinRoute(router, endpoint, db)
 	}
 }

@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"rpl-service/constants"
+	"rpl-service/config/constants"
 	"rpl-service/models"
 	"strings"
 )
