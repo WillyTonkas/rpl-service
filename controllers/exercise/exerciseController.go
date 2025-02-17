@@ -42,21 +42,22 @@ func SolveExercise(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 	_, _ = w.Write(byteResults)
 }
 
-func solveExercise(r *http.Request, db *gorm.DB, exerciseID uuid.UUID) ([]models.ExerciseResult, ExerciseError) {
+func solveExercise(r *http.Request, db *gorm.DB, exerciseID uuid.UUID) ([]models.ExerciseResult, exerciseError) {
 	var response models.SolveExerciseResponse
 	body, readErr := io.ReadAll(r.Body)
+
 	if readErr != nil {
-		return nil, ExerciseError{Message: "Invalid body format", Status: http.StatusBadRequest}
+		return nil, exerciseError{Message: "Invalid body format", Status: http.StatusBadRequest}
 	}
 	if respErr := json.Unmarshal(body, &response); respErr != nil {
-		return nil, ExerciseError{Message: "Invalid body format", Status: http.StatusBadRequest}
+		return nil, exerciseError{Message: "Invalid body format", Status: http.StatusBadRequest}
 	}
-	results, exerciseError := exerciseService.SolveExercise(exerciseID, db, response.ExerciseCode)
-	if exerciseError != nil {
-		return nil, ExerciseError{Message: "Error while executing tests", Status: http.StatusInternalServerError}
 
+	results, exerciseErr := exerciseService.SolveExercise(exerciseID, db, response.ExerciseCode)
+	if exerciseErr != nil {
+		return nil, exerciseError{Message: "Error while executing tests", Status: http.StatusInternalServerError}
 	}
-	return results, ExerciseError{Message: "Solved Successfully", Status: http.StatusOK}
+	return results, exerciseError{Message: "Solved Successfully", Status: http.StatusOK}
 }
 
 func CreateExercise(_ http.ResponseWriter, _ *http.Request, _ *gorm.DB) {
@@ -67,7 +68,7 @@ func FindExercise(_ http.ResponseWriter, _ *http.Request, _ *gorm.DB) {
 	// TODO
 }
 
-type ExerciseError struct {
+type exerciseError struct {
 	Message string
 	Status  int
 }
