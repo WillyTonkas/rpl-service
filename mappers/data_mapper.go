@@ -79,7 +79,7 @@ func GetUserID(r *http.Request) (string, error) {
 	// Get user ID from subject
 	sub := claims.RegisteredClaims.Subject
 	parts := strings.Split(sub, "|")
-	if len(parts) != constants.PartsOfID {
+	if len(parts) != constants.IDPartsAmount {
 		return constants.EmptyString, errors.New("invalid subject format")
 	}
 
