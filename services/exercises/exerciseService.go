@@ -69,14 +69,7 @@ func (s *ExerciseService) getTestsByExerciseID(exerciseUUID uuid.UUID, db *gorm.
 	db.First(&exercise, exerciseUUID)
 
 	var tests []models.Test
-
-	// Now I should have the exercise, so I shall get all tests
-	for _, testID := range exercise.TestIDs {
-		// TODO: see gorm docs and retrieve multiple rows
-		var test models.Test
-		db.Model(models.Test{}).Where(&test, "ID = ?", testID)
-		tests = append(tests, test)
-	}
+	db.Where("ID IN ?", exercise.TestIDs).Find(&tests)
 
 	return tests
 }
