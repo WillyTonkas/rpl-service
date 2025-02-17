@@ -81,8 +81,5 @@ func (c *CourseService) CourseExists(db *gorm.DB, courseID uuid.UUID) bool {
 }
 
 func (c *CourseService) IsOwner(db *gorm.DB, userID, courseID uuid.UUID) bool {
-	// TODO: move to repository
-	currentUser := models.IsEnrolled{}
-	db.Model(models.IsEnrolled{}).Where("UserID = ? AND CourseID = ?", userID, courseID).First(&currentUser)
-	return currentUser.IsOwner
+	return c.Repository.FindUserInCourse(userID, courseID, db)
 }
