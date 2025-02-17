@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 	"io"
 	"net/http"
+	"rpl-service/config/constants"
 	"rpl-service/models"
 	"rpl-service/services/exercises"
 )
@@ -26,7 +27,7 @@ func SolveExercise(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 
 	// TODO: make a more valid check, exercise.ID is currently a uint, don't know why
 	// TODO 2: we may need to remove the gorm.Model and manually declare each UUID as primary key
-	if exercise.Name == "" {
+	if exercise.Name == constants.EmptyString {
 		http.Error(w, "No exercise with that ID", http.StatusNotFound)
 		return
 	}
