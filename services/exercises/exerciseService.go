@@ -8,74 +8,82 @@ import (
 	"os"
 	"rpl-service/mappers"
 	"rpl-service/models"
-	"rpl-service/repositories"
-	"rpl-service/services"
+	"rpl-service/repositories/course"
+	"rpl-service/repositories/exercise"
 	"rpl-service/services/users"
 )
 
 type ExerciseService struct {
-	services.Service[models.Exercise]
+	exerciseRepo exercise.ExerciseRepository
+	testRepo     exercise.TestRepository
 }
 
 func (s *ExerciseService) FindExercise(exerciseID uuid.UUID, db *gorm.DB) (*models.Exercise, error) {
-	return s.Repository.FindByID(exerciseID, db)
+	return s.exerciseRepo.FindByID(exerciseID, db)
 }
 
 func (s *ExerciseService) CreateExercise(db *gorm.DB, exercise models.ExerciseDTO, userID, courseID uuid.UUID) error {
 	var courseService = users.CourseService{
-		Service: services.Service[models.Course]{
-			Repository: repositories.Repository[models.Course]{},
-		},
+		CourseRepository: course.CourseRepository{},
+		EnrollRepository: course.EnrollToCourseRepository{},
 	}
 	if !courseService.IsOwner(db, userID, courseID) {
 		return errors.New("this user doesn't have permission to create an exercise")
 	}
 
-	testIDs := s.buildTests(db, exercise)
-
+	testIDs, buildTestErr := s.buildTests(db, exercise)
+	if buildTestErr != nil {
+		return buildTestErr
+	}
 	return s.createExercise(db, exercise, testIDs)
 }
 
-func (s *ExerciseService) CreateTest(db *gorm.DB, test models.TestDTO) uuid.UUID {
-	db.Model(models.Test{}).Create(models.Test{
+func (s *ExerciseService) CreateTest(db *gorm.DB, test models.TestDTO) (uuid.UUID, error) {
+	currentTest := models.Test{
 		Model:      gorm.Model{},
 		Name:       test.Name,
 		TestScript: test.TestScript,
-	})
+	}
 
-	var currentTestID uuid.UUID
-	db.Model(models.Test{}).Select("ID").Last(&currentTestID)
+	createErr := s.testRepo.Create(currentTest, db)
+	if createErr != nil {
+		return uuid.Nil, createErr
+	}
+	// TODO: Check if this is the correct way to get the last test ID
+	//var currentTestID uuid.UUID
+	//db.Model(models.Test{}).Select("ID").Last(&currentTestID)
 
-	return currentTestID
+	return uuid.Nil, nil
 }
 
 // SolveExercise exerciseCode should come from the request.
 func (s *ExerciseService) SolveExercise(exerciseUUID uuid.UUID, db *gorm.DB, exerciseCode string,
 ) ([]models.ExerciseResult, error) {
-	tests := s.getTestsByExerciseID(exerciseUUID, db)
-	exercise, err := s.FindExercise(exerciseUUID, db)
-
-	if err != nil {
-		return []models.ExerciseResult{}, err
+	tests, getTestErr := s.getTestsByExerciseID(exerciseUUID, db)
+	if getTestErr != nil {
+		return []models.ExerciseResult{}, getTestErr
 	}
 
-	return s.getTestResults(tests, exerciseCode, exercise)
+	currentExercise, FindErr := s.FindExercise(exerciseUUID, db)
+	if FindErr != nil {
+		return []models.ExerciseResult{}, FindErr
+	}
+
+	return s.getTestResults(tests, exerciseCode, currentExercise)
 }
 
 // Private methods
 
-func (s *ExerciseService) getTestsByExerciseID(exerciseUUID uuid.UUID, db *gorm.DB) []models.Test {
-	var exercise models.Exercise
-	db.First(&exercise, exerciseUUID)
-
-	var tests []models.Test
-	db.Where("ID IN ?", exercise.TestIDs).Find(&tests)
-
-	return tests
+func (s *ExerciseService) getTestsByExerciseID(exerciseUUID uuid.UUID, db *gorm.DB) ([]models.Test, error) {
+	tests, queryErr := s.testRepo.QueryTests(exerciseUUID, db)
+	if queryErr != nil {
+		return []models.Test{}, queryErr
+	}
+	return tests, nil
 }
 
 func (s *ExerciseService) createExercise(db *gorm.DB, exercise models.ExerciseDTO, testIDs []string) error {
-	return s.Repository.Create(models.Exercise{
+	return s.exerciseRepo.Create(models.Exercise{
 		Model:       gorm.Model{},
 		Name:        exercise.Name,
 		Description: exercise.Description,
@@ -86,12 +94,16 @@ func (s *ExerciseService) createExercise(db *gorm.DB, exercise models.ExerciseDT
 	}, db)
 }
 
-func (s *ExerciseService) buildTests(db *gorm.DB, exercise models.ExerciseDTO) []string {
+func (s *ExerciseService) buildTests(db *gorm.DB, exercise models.ExerciseDTO) ([]string, error) {
 	var testIDs []string
 	for _, test := range exercise.TestData {
-		testIDs = append(testIDs, s.CreateTest(db, test).String())
+		ID, createErr := s.CreateTest(db, test)
+		if createErr != nil {
+			return []string{}, createErr
+		}
+		testIDs = append(testIDs, ID.String())
 	}
-	return testIDs
+	return testIDs, nil
 }
 
 func (s *ExerciseService) getTestResults(tests []models.Test, exerciseCode string, exercise *models.Exercise,

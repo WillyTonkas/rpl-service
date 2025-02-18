@@ -9,8 +9,8 @@ import (
 )
 
 type CourseService struct {
-	courseRepository course.CourseRepository
-	enrollRepository course.EnrollToCourseRepository
+	CourseRepository course.CourseRepository
+	EnrollRepository course.EnrollToCourseRepository
 }
 
 func (c *CourseService) EnrollToCourse(db *gorm.DB, userID, courseID uuid.UUID) error {
@@ -25,7 +25,7 @@ func (c *CourseService) EnrollToCourse(db *gorm.DB, userID, courseID uuid.UUID) 
 		IsOwner:  false,
 	}
 
-	if createErr := c.enrollRepository.Create(isEnrolled, db); createErr != nil {
+	if createErr := c.EnrollRepository.Create(isEnrolled, db); createErr != nil {
 		return errors.New("error when enrolling user to course")
 	}
 
@@ -40,7 +40,7 @@ func (c *CourseService) CreateCourse(db *gorm.DB, userID uuid.UUID, courseName,
 		Description: description,
 	}
 
-	if createCourseErr := c.courseRepository.Create(currentCourse, db); createCourseErr != nil {
+	if createCourseErr := c.CourseRepository.Create(currentCourse, db); createCourseErr != nil {
 		return models.Course{}, errors.New("error when creating a course")
 	}
 
@@ -51,7 +51,7 @@ func (c *CourseService) CreateCourse(db *gorm.DB, userID uuid.UUID, courseName,
 		IsOwner:  true,
 	}
 
-	if createEnrollErr := c.enrollRepository.Create(isEnrolled, db); createEnrollErr != nil {
+	if createEnrollErr := c.EnrollRepository.Create(isEnrolled, db); createEnrollErr != nil {
 		return models.Course{}, errors.New("error when creating a course")
 	}
 
@@ -67,7 +67,7 @@ func (c *CourseService) RemoveStudent(db *gorm.DB, userID, courseID, studentID u
 		return errors.New("the user does not exist in the course")
 	}
 
-	if removeErr := c.enrollRepository.RemoveStudent(studentID, db); removeErr != nil {
+	if removeErr := c.EnrollRepository.RemoveStudent(studentID, db); removeErr != nil {
 		return errors.New("error when removing student from course")
 	}
 
@@ -78,13 +78,13 @@ func (c *CourseService) IsUserInCourse(db *gorm.DB, userID, courseID uuid.UUID) 
 	if !c.CourseExists(db, courseID) {
 		return false
 	}
-	return c.courseRepository.FindUserInCourse(userID, courseID, db)
+	return c.CourseRepository.FindUserInCourse(userID, courseID, db)
 }
 
 func (c *CourseService) CourseExists(db *gorm.DB, courseID uuid.UUID) bool {
-	return c.courseRepository.Exists(courseID, db)
+	return c.CourseRepository.Exists(courseID, db)
 }
 
 func (c *CourseService) IsOwner(db *gorm.DB, userID, courseID uuid.UUID) bool {
-	return c.courseRepository.FindUserInCourse(userID, courseID, db)
+	return c.CourseRepository.FindUserInCourse(userID, courseID, db)
 }
