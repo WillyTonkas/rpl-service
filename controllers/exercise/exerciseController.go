@@ -31,15 +31,47 @@ func SolveExercise(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
 		return
 	}
 
-	results, exerciseError := solveExercise(r, db, exerciseID)
+	results, solveErr := solveExercise(r, db, exerciseID)
 
-	if exerciseError.Status != http.StatusOK {
-		http.Error(w, exerciseError.Message, exerciseError.Status)
+	if solveErr.Status != http.StatusOK {
+		http.Error(w, solveErr.Message, solveErr.Status)
 		return
 	}
 
 	byteResults, _ := json.Marshal(results) //nolint:musttag // No need
 	_, _ = w.Write(byteResults)
+	w.WriteHeader(http.StatusOK)
+}
+
+func CreateExercise(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
+	var exerciseDTO models.ExerciseDTO
+	_ = json.NewDecoder(r.Body).Decode(&exerciseDTO)
+	if createErr := exerciseService.CreateExercise(db, exerciseDTO, uuid.UUID{}, uuid.UUID{}); createErr != nil {
+		http.Error(w, "Error while creating exercise", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	return
+}
+
+func FindExercise(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
+	exerciseID, parseErr := uuid.Parse(r.PathValue("exerciseId"))
+	if parseErr != nil {
+		http.Error(w, "Invalid exercise ID format", http.StatusBadRequest)
+		return
+	}
+
+	exercise, exerciseErr := exerciseService.FindExercise(exerciseID, db)
+	if exerciseErr != nil {
+		http.Error(w, "Error while finding exercise", http.StatusInternalServerError)
+		return
+	}
+
+	byteExercise, _ := json.Marshal(exercise) //nolint:musttag // No need
+	_, _ = w.Write(byteExercise)
+	w.WriteHeader(http.StatusCreated)
+	return
 }
 
 func solveExercise(r *http.Request, db *gorm.DB, exerciseID uuid.UUID) ([]models.ExerciseResult, exerciseError) {
@@ -58,14 +90,6 @@ func solveExercise(r *http.Request, db *gorm.DB, exerciseID uuid.UUID) ([]models
 		return nil, exerciseError{Message: "Error while executing tests", Status: http.StatusInternalServerError}
 	}
 	return results, exerciseError{Message: "Solved Successfully", Status: http.StatusOK}
-}
-
-func CreateExercise(_ http.ResponseWriter, _ *http.Request, _ *gorm.DB) {
-	// TODO
-}
-
-func FindExercise(_ http.ResponseWriter, _ *http.Request, _ *gorm.DB) {
-	// TODO
 }
 
 type exerciseError struct {
