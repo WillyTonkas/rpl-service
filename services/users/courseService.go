@@ -5,11 +5,12 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"rpl-service/models"
-	"rpl-service/services"
+	"rpl-service/repositories/course"
 )
 
 type CourseService struct {
-	services.Service[models.Course]
+	courseRepository course.CourseRepository
+	enrollRepository course.EnrollToCourseRepository
 }
 
 func (c *CourseService) EnrollToCourse(db *gorm.DB, userID, courseID uuid.UUID) error {
@@ -17,12 +18,16 @@ func (c *CourseService) EnrollToCourse(db *gorm.DB, userID, courseID uuid.UUID) 
 		return errors.New("user is already in course")
 	}
 
-	db.Model(models.IsEnrolled{}).Create(models.IsEnrolled{
+	isEnrolled := models.IsEnrolled{
 		Model:    gorm.Model{},
 		UserID:   userID,
 		CourseID: courseID,
 		IsOwner:  false,
-	})
+	}
+
+	if createErr := c.enrollRepository.Create(isEnrolled, db); createErr != nil {
+		return errors.New("error when enrolling user to course")
+	}
 
 	return nil
 }
@@ -35,7 +40,7 @@ func (c *CourseService) CreateCourse(db *gorm.DB, userID uuid.UUID, courseName,
 		Description: description,
 	}
 
-	if err := db.Model(models.Course{}).Create(&currentCourse).Error; err != nil {
+	if createCourseErr := c.courseRepository.Create(currentCourse, db); createCourseErr != nil {
 		return models.Course{}, errors.New("error when creating a course")
 	}
 
@@ -46,7 +51,7 @@ func (c *CourseService) CreateCourse(db *gorm.DB, userID uuid.UUID, courseName,
 		IsOwner:  true,
 	}
 
-	if db.Model(models.IsEnrolled{}).Create(&isEnrolled).Error != nil {
+	if createEnrollErr := c.enrollRepository.Create(isEnrolled, db); createEnrollErr != nil {
 		return models.Course{}, errors.New("error when creating a course")
 	}
 
@@ -62,9 +67,9 @@ func (c *CourseService) RemoveStudent(db *gorm.DB, userID, courseID, studentID u
 		return errors.New("the user does not exist in the course")
 	}
 
-	var student models.IsEnrolled
-	db.Model(models.IsEnrolled{}).First(&student, "ID = ?", studentID)
-	db.Model(models.IsEnrolled{}).Delete(&student)
+	if removeErr := c.enrollRepository.RemoveStudent(studentID, db); removeErr != nil {
+		return errors.New("error when removing student from course")
+	}
 
 	return nil
 }
@@ -73,13 +78,13 @@ func (c *CourseService) IsUserInCourse(db *gorm.DB, userID, courseID uuid.UUID) 
 	if !c.CourseExists(db, courseID) {
 		return false
 	}
-	return db.Model(models.IsEnrolled{}).Where("UserID = ? AND CourseID = ?", userID, courseID).Error == nil
+	return c.courseRepository.FindUserInCourse(userID, courseID, db)
 }
 
 func (c *CourseService) CourseExists(db *gorm.DB, courseID uuid.UUID) bool {
-	return c.Repository.Exists(courseID, db)
+	return c.courseRepository.Exists(courseID, db)
 }
 
 func (c *CourseService) IsOwner(db *gorm.DB, userID, courseID uuid.UUID) bool {
-	return c.Repository.FindUserInCourse(userID, courseID, db)
+	return c.courseRepository.FindUserInCourse(userID, courseID, db)
 }

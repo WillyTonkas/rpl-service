@@ -13,7 +13,6 @@ import (
 // Controllers should have all the functions and logic, routers should expose the endpoints.
 // This is the controller for the course entity.
 
-// TODO: Create a specialized repository for Courses
 var courseService = users.CourseService{}
 
 func Exists(w http.ResponseWriter, r *http.Request, db *gorm.DB) {
