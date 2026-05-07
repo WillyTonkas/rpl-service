@@ -3,6 +3,7 @@ package repositories
 import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"rpl-service/models"
 )
 
 // Interacts with directly database.
@@ -15,6 +16,12 @@ func (r *Repository[T]) FindByID(id uuid.UUID, db *gorm.DB) (*T, error) {
 		return nil, err
 	}
 	return &entity, nil
+}
+
+// Returns whether the searched user exists in DB.
+func (r *Repository[T]) FindUserInCourse(userID uuid.UUID, courseID uuid.UUID, db *gorm.DB) bool {
+	var entity models.IsEnrolled
+	return db.First(&entity, "user_id = ? AND course_id = ?", userID, courseID).Error != nil
 }
 
 // Returns whether the searched element exists in DB.
