@@ -1,13 +1,14 @@
 package models
 
 import (
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type IsEnrolled struct {
 	gorm.Model
-	UserID   uint
-	CourseID uint
+	UserID   uuid.UUID
+	CourseID uuid.UUID
 	IsOwner  bool
 }
 
